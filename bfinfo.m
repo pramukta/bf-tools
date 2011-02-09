@@ -37,4 +37,5 @@ function [output] = bfinfo(filename, varargin)
        output{i}.channels = omemd.getPixelsSizeC(i-1).getValue;
        output{i}.timePoints = omemd.getPixelsSizeT(i-1).getValue;
     end
+    reader.close();
 end
