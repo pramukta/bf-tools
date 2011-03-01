@@ -28,7 +28,6 @@ function output = bfread(filename, varargin)
 % Dept of Physics
 % Georgetown University
 %
-    
     parser = inputParser;
     parser.addRequired('filename', @ischar);
     parser.addOptional('Series', 0, @(x)isnumeric(x) && x > 0);
@@ -37,52 +36,61 @@ function output = bfread(filename, varargin)
         isequal(sum(x(1:3) > x(4:6)), 0) );
     parser.addParamValue('Channel', 1, @isnumeric);
     parser.addParamValue('TimePoint', 1, @isnumeric);
+    parser.addParamValue('ShowProgress', true, @islogical);
    
     parser.parse(filename, varargin{:});
     Parameters = parser.Results;
     
     % populate actual image data
     if(Parameters.Series > 0)
-		[reader omemd] = bfinit(filename);
-		% populate basic metadata
-	    numSeries = reader.getSeriesCount();
-	
-       index = Parameters.Series - 1; 
-       % fetch the specified series
-       reader.setSeries(index);
-       width = reader.getSizeX();
-       height = reader.getSizeY();
-       depth = reader.getSizeZ();
-              
-       if(~Parameters.CropRegion)
-           % set the CropRegion to be the full frame
-           Parameters.CropRegion = [1 1 1 width height depth];
-       end
+      [reader omemd] = bfinit(filename);
+      % populate basic metadata
+      numSeries = reader.getSeriesCount();
+      
+      index = Parameters.Series - 1; 
+      % fetch the specified series
+      reader.setSeries(index);
+      width = reader.getSizeX();
+      height = reader.getSizeY();
+      depth = reader.getSizeZ();
        
-       width = numel(Parameters.CropRegion(1):Parameters.CropRegion(4));
-       height = numel(Parameters.CropRegion(2):Parameters.CropRegion(5));
-       z_indices = Parameters.CropRegion(3):Parameters.CropRegion(6);
-       depth = numel(z_indices);
-       
-       c_index = Parameters.Channel;
-       t_index = Parameters.TimePoint;
-       
-       output = zeros(width, height, depth);
-       hProgress = waitbar(0, sprintf('Loading Slices (%u/%u)', 0, depth), ...
-           'WindowStyle', 'modal');
-       for i = 1:depth
-           waitbar(i / depth, hProgress, sprintf('Loading Slices (%u/%u)', i, depth));
-           % params 2 and 3 are for channel and time coordinates
-           index = reader.getIndex(z_indices(i) - 1, c_index - 1, t_index - 1);
-           raw_data = reader.openImage(index);
-           slice_data = raw_data.getData.getPixels(Parameters.CropRegion(1) - 1, ...
-               Parameters.CropRegion(2) - 1, ...
-               width, height, []);
-           output(:,:,i) = reshape(slice_data, [width height]);
-       end
-       delete(hProgress);
-       reader.close;
+      if(~Parameters.CropRegion)
+        % set the CropRegion to be the full frame
+        Parameters.CropRegion = [1 1 1 width height depth];
+      end
+
+      width = numel(Parameters.CropRegion(1):Parameters.CropRegion(4));
+      height = numel(Parameters.CropRegion(2):Parameters.CropRegion(5));
+      z_indices = Parameters.CropRegion(3):Parameters.CropRegion(6);
+      depth = numel(z_indices);
+      
+      c_index = Parameters.Channel;
+      t_index = Parameters.TimePoint;
+      
+      output = zeros(width, height, depth);
+      if(Parameters.ShowProgress)
+          hProgress = waitbar(0, sprintf('Loading Slices (%u/%u)', 0, depth), ...
+                          'WindowStyle', 'modal');
+      end
+      tic;
+      for i = 1:depth
+        if(Parameters.ShowProgress & toc > 0.1)
+            waitbar(i / depth, hProgress, sprintf('Loading Slices (%u/%u)', i, depth));
+            tic;
+        end
+        % params 2 and 3 are for channel and time coordinates
+        index = reader.getIndex(z_indices(i) - 1, c_index - 1, t_index - 1);
+        raw_data = reader.openImage(index);
+        slice_data = raw_data.getData.getPixels(Parameters.CropRegion(1) - 1, ...
+                                                Parameters.CropRegion(2) - 1, ...
+                                                width, height, []);
+        output(:,:,i) = reshape(slice_data, [width height]);
+      end
+      if(Parameters.ShowProgress)
+          delete(hProgress);
+      end
+      reader.close;
     else
- 	   output = bfinfo(filename);
-   	end
+      output = bfinfo(filename);
+    end
 end
