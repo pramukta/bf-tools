@@ -21,6 +21,10 @@ function output = bfread(filename, varargin)
 % 'CropRegion' option.  The associated parameter is a six element vector of
 % indices populated as follows: [minx miny minz maxx maxy maxz].
 %
+% There is also an option to return the image data in its native precision.
+% To do so just set the 'NativePrecision' option to true in the call.  By
+% default the routine returns data casted to double.
+%
 % Currently this routine has been tested with XYZ, XYZT, XYZCT data contained 
 % in Leica LIF files and Imaris 5.5 files.  Other scenarios may or may not work.
 % 
@@ -37,6 +41,7 @@ function output = bfread(filename, varargin)
     parser.addParamValue('Channel', 1, @isnumeric);
     parser.addParamValue('TimePoint', 1, @isnumeric);
     parser.addParamValue('ShowProgress', true, @islogical);
+    parser.addParamValue('NativePrecision', false, @islogical); 
    
     parser.parse(filename, varargin{:});
     Parameters = parser.Results;
@@ -67,14 +72,41 @@ function output = bfread(filename, varargin)
       c_index = Parameters.Channel;
       t_index = Parameters.TimePoint;
       
-      output = zeros(width, height, depth);
+      if(Parameters.NativePrecision)
+          pixelType = reader.getPixelType;
+      else
+          pixelType = loci.formats.FormatTools.DOUBLE;
+      end
+      
+      switch pixelType
+          case loci.formats.FormatTools.UINT8
+              castfn = @uint8;
+          case loci.formats.FormatTools.UINT16
+              castfn = @uint16;
+          case loci.formats.FormatTools.UINT32
+              castfn = @uint32;
+          case loci.formats.FormatTools.INT8
+              castfn = @int8;
+          case loci.formats.FormatTools.INT16
+              castfn = @int16;
+          case loci.formats.FormatTools.INT32
+              castfn = @int32;
+          case loci.formats.FormatTools.DOUBLE
+              castfn = @double;
+          case loci.formats.FormatTools.FLOAT
+              castfn = @single;
+          otherwise
+              castfn = @double;
+      end
+      
+      output = castfn(zeros(width, height, depth));
       if(Parameters.ShowProgress)
           hProgress = waitbar(0, sprintf('Loading Slices (%u/%u)', 0, depth), ...
                           'WindowStyle', 'modal');
       end
       tic;
       for i = 1:depth
-        if(Parameters.ShowProgress & toc > 0.1)
+        if(Parameters.ShowProgress && toc > 0.1)
             waitbar(i / depth, hProgress, sprintf('Loading Slices (%u/%u)', i, depth));
             tic;
         end
@@ -84,7 +116,7 @@ function output = bfread(filename, varargin)
         slice_data = raw_data.getData.getPixels(Parameters.CropRegion(1) - 1, ...
                                                 Parameters.CropRegion(2) - 1, ...
                                                 width, height, []);
-        output(:,:,i) = reshape(slice_data, [width height]);
+        output(:,:,i) = castfn(reshape(slice_data, [width height]));
       end
       if(Parameters.ShowProgress)
           delete(hProgress);
