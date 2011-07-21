@@ -99,7 +99,7 @@ function output = bfread(filename, varargin)
               castfn = @double;
       end
       
-      output = castfn(zeros(width, height, depth));
+      output = zeros(width, height, depth, char(castfn));
       if(Parameters.ShowProgress)
           hProgress = waitbar(0, sprintf('Loading Slices (%u/%u)', 0, depth), ...
                           'WindowStyle', 'modal');
