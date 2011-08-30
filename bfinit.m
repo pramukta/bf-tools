@@ -12,13 +12,13 @@ function [reader omemd] = bfinit(filename)
     % read the java classpath
     javapaths = javaclasspath;
     for i = 1:numel(javapaths)
-        [p f e v] = fileparts(javapaths{i});
+        [p f e] = fileparts(javapaths{i});
         javapaths{i} = strcat(f, '.', e);
     end
     if(isequal(strmatch(loci_tools_jar, javapaths), []))
         % find the absolute path of the jar file
         me = which('bfread');
-        [p f e v] = fileparts(me);
+        [p f e] = fileparts(me);
         % trunk version
         javaaddpath(fullfile(p, 'ext', loci_tools_jar));
         % release version
