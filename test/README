@@ -1,7 +1,5 @@
-BROKEN SINCE I DON'T HAVE THAT SERVER ANYMORE
-
 data files necessary for running tests are available at:
 
-http://software.type1a.net/bf-tools-testdata.tar.gz
+https://s3.amazonaws.com/deaddrop/bf-tools-testdata.tar.gz
 
 (warning: it is a large file)
