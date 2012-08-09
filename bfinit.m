@@ -7,7 +7,9 @@ function [reader omemd] = bfinit(filename)
 %
 % If you do use this routine, make sure to close the reader once you are done.
 
-    loci_tools_jar = 'loci_tools-4.2.2.jar';
+	% I hope this doesn't change
+    loci_tools_remote_path = 'http://loci.wisc.edu/files/software/loci_tools.jar';
+	loci_tools_jar = 'loci_tools.jar';
     
     % read the java classpath
     javapaths = javaclasspath;
@@ -16,13 +18,20 @@ function [reader omemd] = bfinit(filename)
         javapaths{i} = strcat(f, '.', e);
     end
     if(isequal(strmatch(loci_tools_jar, javapaths), []))
-        % find the absolute path of the jar file
-        me = which('bfread');
+        % find our absolute path of the jar file
+        me = which('bfinit');
         [p f e] = fileparts(me);
-        % trunk version
-        javaaddpath(fullfile(p, 'ext', loci_tools_jar));
-        % release version
-        % javaaddpath(fullfile(p, loci_tools_jar));        
+		% check if loci_tools_jar has been downloaded already
+		loci_tools_local_path = fullfile(p, 'ext', loci_tools_jar);
+		% if not then download it to that location
+		if(isequal(exist(loci_tools_local_path, 'file'), 0))
+			fprintf('BioFormats library not found at location: %s\n', loci_tools_local_path);
+            fprintf('  Downloading current version from: %s\n', loci_tools_remote_path);
+            urlwrite(loci_tools_remote_path, loci_tools_local_path, 'get', {});
+            fprintf('Completed.\n\n');
+		end
+		% and add that location to our java path
+        javaaddpath(loci_tools_local_path);
     end
 
     % quick and dirty log4j initialization
