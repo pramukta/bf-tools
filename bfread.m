@@ -40,6 +40,7 @@ function output = bfread(filename, varargin)
         isequal(sum(x(1:3) > x(4:6)), 0) );
     parser.addParamValue('Channel', 1, @isnumeric);
     parser.addParamValue('TimePoint', 1, @isnumeric);
+    parser.addParamValue('TimePoints', [], @(x) isnumeric(x) || isequal(x, 'all'));
     parser.addParamValue('ShowProgress', true, @islogical);
     parser.addParamValue('NativePrecision', false, @islogical); 
    
@@ -58,6 +59,7 @@ function output = bfread(filename, varargin)
       width = reader.getSizeX();
       height = reader.getSizeY();
       depth = reader.getSizeZ();
+      timepoints = reader.getSizeT();
        
       if(~Parameters.CropRegion)
         % set the CropRegion to be the full frame
@@ -70,7 +72,14 @@ function output = bfread(filename, varargin)
       depth = numel(z_indices);
       
       c_index = Parameters.Channel;
-      t_index = Parameters.TimePoint;
+      
+      if(isempty(Parameters.TimePoints))
+          t_indices = Parameters.TimePoint;
+      elseif(isequal(Parameters.TimePoints, 'all'))
+          t_indices = 1:timepoints;
+      else
+          t_indices = Parameters.TimePoint;
+      end
       
       if(Parameters.NativePrecision)
           pixelType = reader.getPixelType;
@@ -99,29 +108,36 @@ function output = bfread(filename, varargin)
               castfn = @double;
       end
       
-      output = zeros(width, height, depth, char(castfn));
+      output = cell(numel(t_indices), 1);
+      tmp = zeros(width, height, depth, char(castfn));
       if(Parameters.ShowProgress)
-          hProgress = waitbar(0, sprintf('Loading Slices (%u/%u)', 0, depth), ...
+          hProgress = waitbar(0, sprintf('Loading Slices (%u/%u)', 0, depth*numel(t_indices)), ...
                           'WindowStyle', 'modal');
       end
       tic;
-      for i = 1:depth
-        if(Parameters.ShowProgress && toc > 0.1)
-            waitbar(i / depth, hProgress, sprintf('Loading Slices (%u/%u)', i, depth));
-            tic;
-        end
-        % params 2 and 3 are for channel and time coordinates
-        index = reader.getIndex(z_indices(i) - 1, c_index - 1, t_index - 1);
-        raw_data = reader.openImage(index);
-        slice_data = raw_data.getData.getPixels(Parameters.CropRegion(1) - 1, ...
-                                                Parameters.CropRegion(2) - 1, ...
-                                                width, height, []);
-        output(:,:,i) = castfn(reshape(slice_data, [width height]));
+      for t = 1:numel(t_indices)
+          for i = 1:depth
+            if(Parameters.ShowProgress && toc > 0.1)
+                waitbar(i*t / (depth*numel(t_indices), hProgress, sprintf('Loading Slices (%u/%u)', i*t, depth*numel(t_indices)));
+                tic;
+            end
+            % params 2 and 3 are for channel and time coordinates
+            index = reader.getIndex(z_indices(i) - 1, c_index - 1, t_indices(t) - 1);
+            raw_data = reader.openImage(index);
+            slice_data = raw_data.getData.getPixels(Parameters.CropRegion(1) - 1, ...
+                                                    Parameters.CropRegion(2) - 1, ...
+                                                    width, height, []);
+            tmp(:,:,i) = castfn(reshape(slice_data, [width height]));
+          end
+          output{t} = tmp;
       end
       if(Parameters.ShowProgress)
           delete(hProgress);
       end
       reader.close;
+      if(isequal(numel(output), 1))
+          output = output{1};
+      end
     else
       output = bfinfo(filename);
     end
