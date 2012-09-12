@@ -118,7 +118,7 @@ function output = bfread(filename, varargin)
       for t = 1:numel(t_indices)
           for i = 1:depth
             if(Parameters.ShowProgress && toc > 0.1)
-                waitbar(i*t / (depth*numel(t_indices), hProgress, sprintf('Loading Slices (%u/%u)', i*t, depth*numel(t_indices)));
+                waitbar(i*t / (depth*numel(t_indices)), hProgress, sprintf('Loading Slices (%u/%u)', i*t, depth*numel(t_indices)));
                 tic;
             end
             % params 2 and 3 are for channel and time coordinates
