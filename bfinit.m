@@ -9,7 +9,7 @@ function [reader omemd] = bfinit(filename)
 
 	% I hope this doesn't change
     loci_tools_remote_path = 'http://loci.wisc.edu/files/software/loci_tools.jar';
-	loci_tools_jar = 'loci_tools.jar';
+    loci_tools_jar = 'loci_tools.jar';
     
     % read the java classpath
     javapaths = javaclasspath;
@@ -25,10 +25,10 @@ function [reader omemd] = bfinit(filename)
 		loci_tools_local_path = fullfile(p, 'ext', loci_tools_jar);
 		% if not then download it to that location
 		if(isequal(exist(loci_tools_local_path, 'file'), 0))
-			fprintf('BioFormats library not found at location: %s\n', loci_tools_local_path);
-            fprintf('  Downloading current version from: %s\n', loci_tools_remote_path);
-            urlwrite(loci_tools_remote_path, loci_tools_local_path, 'get', {});
-            fprintf('Completed.\n\n');
+                    fprintf('BioFormats library not found at location: %s\n', loci_tools_local_path);
+                    fprintf('  Downloading current version from: %s\n', loci_tools_remote_path);
+                    urlwrite(loci_tools_remote_path, loci_tools_local_path, 'get', {});
+                    fprintf('Completed.\n\n');
 		end
 		% and add that location to our java path
         javaaddpath(loci_tools_local_path);
