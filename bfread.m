@@ -21,9 +21,18 @@ function output = bfread(filename, varargin)
 % 'CropRegion' option.  The associated parameter is a six element vector of
 % indices populated as follows: [minx miny minz maxx maxy maxz].
 %
+% Multiple time points within a series may be read by specifying the
+% 'TimePoints' keyword parameter (note the plural).  Its value can either  
+% be an array of time indices or the string 'all' if you want to read them
+% all.  When this option is active, the data is returned as a cell array of
+% images/volumes.
+%
 % There is also an option to return the image data in its native precision.
 % To do so just set the 'NativePrecision' option to true in the call.  By
 % default the routine returns data casted to double.
+%
+% By default, a progress bar is shown.  To suppress the progress bar set
+% the keyword option 'ShowProgress' to false.
 %
 % Currently this routine has been tested with XYZ, XYZT, XYZCT data contained 
 % in Leica LIF files and Imaris 5.5 files.  Other scenarios may or may not work.
@@ -78,7 +87,7 @@ function output = bfread(filename, varargin)
       elseif(isequal(Parameters.TimePoints, 'all'))
           t_indices = 1:timepoints;
       else
-          t_indices = Parameters.TimePoint;
+          t_indices = Parameters.TimePoints;
       end
       
       if(Parameters.NativePrecision)

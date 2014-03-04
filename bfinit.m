@@ -8,7 +8,7 @@ function [reader omemd] = bfinit(filename)
 % If you do use this routine, make sure to close the reader once you are done.
 
 	% I hope this doesn't change
-    loci_tools_remote_path = 'http://loci.wisc.edu/files/software/loci_tools.jar';
+    loci_tools_remote_path = 'http://downloads.openmicroscopy.org/bio-formats/5.0.0/artifacts/loci_tools.jar';
     loci_tools_jar = 'loci_tools.jar';
     
     % read the java classpath
@@ -48,7 +48,7 @@ function [reader omemd] = bfinit(filename)
     reader.setMetadataStore(omemd);
     reader.setMetadataFiltered(false);
     % make sure the reader actually collects the metadata
-    reader.setMetadataCollected(true);
+    % reader.setMetadataCollected(true);
     reader.setOriginalMetadataPopulated(true);
 
     if(ispc)
